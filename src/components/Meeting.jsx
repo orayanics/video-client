@@ -36,7 +36,7 @@ const Meeting = () => {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      const domain = 'server-production-cbb8.up.railway.app';
+      const domain = 'server-production-2381.up.railway.app';
       localStream.current = stream;
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
