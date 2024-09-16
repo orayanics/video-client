@@ -20,8 +20,9 @@ const Meeting = () => {
   const domain = "server-production-2381.up.railway.app";
 
   useEffect(() => {
+    console.log(`Room ID: ${roomID}`)
     // Start WebSocket Connection to Server
-    serverConnection.current = new WebSocket(`wss://${domain}/meeting/${roomID}`);
+    serverConnection.current = new WebSocket(`wss://${domain}`);
 
     // Handle WS Events
     serverConnection.current.onopen = async () => {
