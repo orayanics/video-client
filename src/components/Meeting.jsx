@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { useParams } from 'react-router-dom'
+import { useParams } from "react-router-dom";
 const Meeting = () => {
   // Get Room ID using parameters
   const { roomID } = useParams();
@@ -18,8 +18,37 @@ const Meeting = () => {
     ],
   };
 
+  const domain = "server-production-2381.up.railway.app";
+
   useEffect(() => {
-    pageReady();
+    // Start WebSocket Connection to Server
+    serverConnection.current = new WebSocket(`wss://${domain}`);
+
+    // Handle WS Events
+    serverConnection.current.onopen = async () => {
+      try {
+        // Send a join request to the server
+        const response = await fetch(`wss://${domain}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ type: "join", meetingId: roomID }),
+        });
+        const data = await response.json();
+        if (data.type === "joined") {
+          // Proceed with video call setup
+          start(true);
+        } else {
+          // Handle error (e.g., room full)
+          console.error(data.message);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    serverConnection.current.onmessage = gotMessageFromServer;
 
     return () => {
       if (peerConnection.current) {
@@ -28,11 +57,11 @@ const Meeting = () => {
       if (serverConnection.current) {
         serverConnection.current.close();
       }
-
     };
   }, []);
 
   async function pageReady() {
+    // User Media Request
     const constraints = {
       video: true,
       audio: false,
@@ -40,18 +69,10 @@ const Meeting = () => {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      const domain = 'server-production-2381.up.railway.app';
       localStream.current = stream;
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
-
-      serverConnection.current = new WebSocket(
-        `wss://${domain}`
-      );
-      serverConnection.current.onmessage = gotMessageFromServer;
-
-      start(true);
     } catch (error) {
       errorHandler(error);
     }
@@ -63,28 +84,27 @@ const Meeting = () => {
       !serverConnection.current ||
       serverConnection.current.readyState !== WebSocket.OPEN
     ) {
+      console.error("Server connection not open");
       return;
     }
 
+    // Create peer connection
     peerConnection.current = new RTCPeerConnection(peerConnectionConfig);
     peerConnection.current.onicecandidate = gotIceCandidate;
     peerConnection.current.ontrack = gotRemoteStream;
 
+    // Local stream to peer connection
     for (const track of localStream.current.getTracks()) {
       peerConnection.current.addTrack(track, localStream.current);
     }
 
+    // Create offer if caller
     if (isCaller) {
       peerConnection.current
         .createOffer()
         .then(createdDescription)
         .catch(errorHandler);
     }
-
-    // Join the room using room ID
-    serverConnection.current.send(
-      JSON.stringify({ type: "joinVideoChatRoom", videoChatRoomId: roomID })
-    );
   }
 
   function gotMessageFromServer(message) {
