@@ -9,7 +9,6 @@ const Meeting = () => {
   const localStream = useRef();
   const peerConnection = useRef();
   const serverConnection = useRef();
-  const uuid = createUUID();
 
   const peerConnectionConfig = {
     iceServers: [
@@ -22,7 +21,7 @@ const Meeting = () => {
 
   useEffect(() => {
     // Start WebSocket Connection to Server
-    serverConnection.current = new WebSocket(`wss://${domain}`);
+    serverConnection.current = new WebSocket(`wss://${domain}/${roomID}`);
 
     // Handle WS Events
     serverConnection.current.onopen = async () => {
@@ -35,11 +34,11 @@ const Meeting = () => {
         console.error(error);
       }
     };
-  
+
     serverConnection.current.onmessage = gotMessageFromServer;
 
     pageReady();
-    
+
     return () => {
       if (peerConnection.current) {
         peerConnection.current.close();
@@ -62,7 +61,7 @@ const Meeting = () => {
       localStream.current = stream;
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
-        console.log('ok local stream')
+        console.log("ok local stream");
       }
     } catch (error) {
       errorHandler(error);
@@ -171,9 +170,11 @@ const Meeting = () => {
     return `${s4() + s4()}-${s4()}-${s4()}-${s4()}-${s4() + s4() + s4()}`;
   }
 
+  const uuid = createUUID();
+
   function muteMic() {
-    localStream.getAudioTracks()[0].enabled =
-      !localStream.getAudioTracks()[0].enabled;
+    localStream.current.getAudioTracks()[0].enabled =
+      !localStream.current.getAudioTracks()[0].enabled;
   }
 
   function muteCam() {
