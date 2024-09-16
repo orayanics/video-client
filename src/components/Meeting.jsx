@@ -68,11 +68,12 @@ const Meeting = () => {
           JSON.stringify({ type: "join-room", roomID: roomid })
         );
         console.log("Connection open");
+
+        start(true);
+        console.log('Start WebRTC signaling')
       };
 
       serverConnection.current.onmessage = gotMessageFromServer;
-
-      start(true);
     } catch (error) {
       errorHandler(error);
     }
@@ -220,12 +221,12 @@ const Meeting = () => {
       </div>
 
       <div style={{ marginTop: "10px" }}>
-        <input
+        {/* <input
           type="button"
           id="start"
           value="Start WebRTC"
           onClick={() => start(true)}
-        ></input>
+        ></input> */}
         <input
           type="button"
           id="muteCam"
