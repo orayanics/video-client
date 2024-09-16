@@ -38,6 +38,8 @@ const Meeting = () => {
   
     serverConnection.current.onmessage = gotMessageFromServer;
 
+    pageReady();
+    
     return () => {
       if (peerConnection.current) {
         peerConnection.current.close();
@@ -60,6 +62,7 @@ const Meeting = () => {
       localStream.current = stream;
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
+        console.log('ok local stream')
       }
     } catch (error) {
       errorHandler(error);
