@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 const Meeting = () => {
   // Get Room ID using parameters
-  const { roomID } = useParams();
+  const { roomid } = useParams();
 
   const localVideoRef = useRef();
   const remoteVideoRef = useRef();
@@ -20,7 +20,7 @@ const Meeting = () => {
   const domain = "server-production-2381.up.railway.app";
 
   useEffect(() => {
-    console.log(`Room ID: ${roomID}`)
+    console.log(`Room ID: ${roomid}`)
     // Start WebSocket Connection to Server
     serverConnection.current = new WebSocket(`wss://${domain}`);
 
@@ -28,7 +28,7 @@ const Meeting = () => {
     serverConnection.current.onopen = async () => {
       try {
         // Send a join request to the server (using WebSocket API)
-        const joinData = { type: "join", meetingId: roomID };
+        const joinData = { type: "join", meetingId: roomid };
         serverConnection.current.send(JSON.stringify(joinData));
         // No need for Fetch here since we're using WebSockets
       } catch (error) {
