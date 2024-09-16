@@ -49,7 +49,7 @@ const Meeting = () => {
   async function pageReady() {
     const constraints = {
       video: true,
-      audio: false,
+      audio: true,
     };
 
     try {
