@@ -64,8 +64,10 @@ const Meeting = () => {
 
       serverConnection.current.onopen = () => {
         // Join the room by sending the room ID to the server
-        serverConnection.current.send(JSON.stringify({ type: 'join-room', roomID: roomid }));
-        console.log('Connection open')
+        serverConnection.current.send(
+          JSON.stringify({ type: "join-room", roomID: roomid })
+        );
+        console.log("Connection open");
       };
 
       serverConnection.current.onmessage = gotMessageFromServer;
@@ -82,7 +84,7 @@ const Meeting = () => {
       !serverConnection.current ||
       serverConnection.current.readyState !== WebSocket.OPEN
     ) {
-      console.log('WebSocket connection is not open');
+      console.log("WebSocket connection is not open");
       return;
     }
 
@@ -90,11 +92,7 @@ const Meeting = () => {
     peerConnection.current.onicecandidate = gotIceCandidate;
     peerConnection.current.ontrack = gotRemoteStream;
 
-    // for (const track of localStream.current.getTracks()) {
-    //   peerConnection.current.addTrack(track, localStream.current);
-    // }
-
-    localStream.current.getTracks().forEach(track => {
+    localStream.current.getTracks().forEach((track) => {
       peerConnection.current.addTrack(track, localStream.current);
     });
 
@@ -120,7 +118,8 @@ const Meeting = () => {
         .then(() => {
           // Only create answers in response to offers
           if (signal.sdp.type === "offer") {
-            peerConnection.current.createAnswer()
+            peerConnection.current
+              .createAnswer()
               .then(createdDescription)
               .catch(errorHandler);
           }
@@ -136,9 +135,21 @@ const Meeting = () => {
   function gotIceCandidate(event) {
     if (event.candidate != null) {
       serverConnection.current.send(
-        JSON.stringify({ ice: event.candidate, uuid: uuid, type: 'ice-candidate' })
+        JSON.stringify({
+          ice: event.candidate,
+          uuid: uuid,
+          type: "ice-candidate",
+        })
       );
     }
+    console.log(
+      "Sending ICE candidate:",
+      JSON.stringify({
+        ice: event.candidate,
+        uuid: uuid,
+        type: "ice-candidate",
+      })
+    );
   }
 
   function createdDescription(description) {
@@ -151,7 +162,7 @@ const Meeting = () => {
           JSON.stringify({
             sdp: peerConnection.current.localDescription,
             uuid: uuid,
-            type: description.type
+            type: description.type,
           })
         );
       })
@@ -163,7 +174,10 @@ const Meeting = () => {
     if (remoteVideoRef.current) {
       remoteVideoRef.current.srcObject = event.streams[0];
     }
-    console.log("Peer Connection State:", peerConnection.current.connectionState);
+    console.log(
+      "Peer Connection State:",
+      peerConnection.current.connectionState
+    );
   }
 
   function errorHandler(error) {
