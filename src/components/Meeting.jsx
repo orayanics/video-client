@@ -51,17 +51,13 @@ const Meeting = () => {
       );
       serverConnection.current.onmessage = gotMessageFromServer;
 
-      serverConnection.current.send(
-        JSON.stringify({ type: "setUsername", username })
-      );
-
-      start();
+      start(true);
     } catch (error) {
       errorHandler(error);
     }
   }
 
-  function start() {
+  function start(isCaller) {
     // check server connection
     if (
       !serverConnection.current ||
