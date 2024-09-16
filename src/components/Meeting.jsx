@@ -1,6 +1,9 @@
 import React, { useEffect, useRef } from "react";
-
+import { useParams } from 'react-router-dom'
 const Meeting = () => {
+  // Get Room ID using parameters
+  const { roomID } = useParams();
+
   const localVideoRef = useRef();
   const remoteVideoRef = useRef();
   const localStream = useRef();
@@ -25,6 +28,7 @@ const Meeting = () => {
       if (serverConnection.current) {
         serverConnection.current.close();
       }
+
     };
   }, []);
 
@@ -47,13 +51,17 @@ const Meeting = () => {
       );
       serverConnection.current.onmessage = gotMessageFromServer;
 
-      start(true);
+      serverConnection.current.send(
+        JSON.stringify({ type: "setUsername", username })
+      );
+
+      start();
     } catch (error) {
       errorHandler(error);
     }
   }
 
-  function start(isCaller) {
+  function start() {
     // check server connection
     if (
       !serverConnection.current ||
@@ -76,6 +84,11 @@ const Meeting = () => {
         .then(createdDescription)
         .catch(errorHandler);
     }
+
+    // Join the room using room ID
+    serverConnection.current.send(
+      JSON.stringify({ type: "joinVideoChatRoom", videoChatRoomId: roomID })
+    );
   }
 
   function gotMessageFromServer(message) {
