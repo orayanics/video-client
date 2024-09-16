@@ -21,7 +21,7 @@ const Meeting = () => {
 
   useEffect(() => {
     // Start WebSocket Connection to Server
-    serverConnection.current = new WebSocket(`wss://${domain}/${roomID}`);
+    serverConnection.current = new WebSocket(`wss://${domain}/meeting/${roomID}`);
 
     // Handle WS Events
     serverConnection.current.onopen = async () => {
