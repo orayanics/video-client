@@ -27,27 +27,15 @@ const Meeting = () => {
     // Handle WS Events
     serverConnection.current.onopen = async () => {
       try {
-        // Send a join request to the server
-        const response = await fetch(`wss://${domain}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ type: "join", meetingId: roomID }),
-        });
-        const data = await response.json();
-        if (data.type === "joined") {
-          // Proceed with video call setup
-          start(true);
-        } else {
-          // Handle error (e.g., room full)
-          console.error(data.message);
-        }
+        // Send a join request to the server (using WebSocket API)
+        const joinData = { type: "join", meetingId: roomID };
+        serverConnection.current.send(JSON.stringify(joinData));
+        // No need for Fetch here since we're using WebSockets
       } catch (error) {
         console.error(error);
       }
     };
-
+  
     serverConnection.current.onmessage = gotMessageFromServer;
 
     return () => {
