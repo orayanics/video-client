@@ -1,11 +1,29 @@
 import React, { useEffect, useRef } from "react";
-
+import { useParams } from "react-router-dom";
 const Meeting = () => {
+  // Get Room ID
+  const { roomid } = useParams();
+
+  // Get video stream
   const localVideoRef = useRef();
   const remoteVideoRef = useRef();
   const localStream = useRef();
+
+  // Connections
   const peerConnection = useRef();
   const serverConnection = useRef();
+
+  // UUID
+  function createUUID() {
+    function s4() {
+      return Math.floor((1 + Math.random()) * 0x10000)
+        .toString(16)
+        .substring(1);
+    }
+
+    return `${s4() + s4()}-${s4()}-${s4()}-${s4()}-${s4() + s4() + s4()}`;
+  }
+
   const uuid = createUUID();
 
   const peerConnectionConfig = {
@@ -36,15 +54,20 @@ const Meeting = () => {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      const domain = 'server-production-2381.up.railway.app';
+      const domain = "server-production-2381.up.railway.app";
       localStream.current = stream;
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
 
-      serverConnection.current = new WebSocket(
-        `wss://${domain}`
-      );
+      serverConnection.current = new WebSocket(`wss://${domain}`);
+
+      serverConnection.current.onopen = () => {
+        // Join the room by sending the room ID to the server
+        serverConnection.current.send(JSON.stringify({ type: 'join-room', roomID: roomid }));
+        console.log('Connection open')
+      };
+
       serverConnection.current.onmessage = gotMessageFromServer;
 
       start(true);
@@ -59,6 +82,7 @@ const Meeting = () => {
       !serverConnection.current ||
       serverConnection.current.readyState !== WebSocket.OPEN
     ) {
+      console.log('WebSocket connection is not open');
       return;
     }
 
@@ -109,7 +133,7 @@ const Meeting = () => {
   function gotIceCandidate(event) {
     if (event.candidate != null) {
       serverConnection.current.send(
-        JSON.stringify({ ice: event.candidate, uuid: uuid })
+        JSON.stringify({ ice: event.candidate, uuid: uuid, type: 'ice-candidate' })
       );
     }
   }
@@ -124,6 +148,7 @@ const Meeting = () => {
           JSON.stringify({
             sdp: peerConnection.current.localDescription,
             uuid: uuid,
+            type: description.type
           })
         );
       })
@@ -141,24 +166,18 @@ const Meeting = () => {
     console.log(error);
   }
 
-  function createUUID() {
-    function s4() {
-      return Math.floor((1 + Math.random()) * 0x10000)
-        .toString(16)
-        .substring(1);
-    }
-
-    return `${s4() + s4()}-${s4()}-${s4()}-${s4()}-${s4() + s4() + s4()}`;
-  }
-
   function muteMic() {
-    localStream.getAudioTracks()[0].enabled =
-      !localStream.getAudioTracks()[0].enabled;
+    const audioTrack = localStream.current.getAudioTracks()[0];
+    if (audioTrack) {
+      audioTrack.enabled = !audioTrack.enabled;
+    }
   }
 
   function muteCam() {
-    localStream.current.getVideoTracks()[0].enabled =
-      !localStream.current.getVideoTracks()[0].enabled;
+    const videoTrack = localStream.current.getVideoTracks()[0];
+    if (videoTrack) {
+      videoTrack.enabled = !videoTrack.enabled;
+    }
   }
 
   return (
