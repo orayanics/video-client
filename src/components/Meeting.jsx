@@ -1,14 +1,12 @@
 import React, { useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
-const Meeting = () => {
-  // Get Room ID using parameters
-  const { roomid } = useParams();
 
+const Meeting = () => {
   const localVideoRef = useRef();
   const remoteVideoRef = useRef();
   const localStream = useRef();
   const peerConnection = useRef();
   const serverConnection = useRef();
+  const uuid = createUUID();
 
   const peerConnectionConfig = {
     iceServers: [
@@ -17,27 +15,7 @@ const Meeting = () => {
     ],
   };
 
-  const domain = "server-production-2381.up.railway.app";
-
   useEffect(() => {
-    console.log(`Room ID: ${roomid}`)
-    // Start WebSocket Connection to Server
-    serverConnection.current = new WebSocket(`wss://${domain}`);
-
-    // Handle WS Events
-    serverConnection.current.onopen = async () => {
-      try {
-        // Send a join request to the server (using WebSocket API)
-        const joinData = { type: "join", meetingId: roomid };
-        serverConnection.current.send(JSON.stringify(joinData));
-        // No need for Fetch here since we're using WebSockets
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    serverConnection.current.onmessage = gotMessageFromServer;
-
     pageReady();
 
     return () => {
@@ -51,7 +29,6 @@ const Meeting = () => {
   }, []);
 
   async function pageReady() {
-    // User Media Request
     const constraints = {
       video: true,
       audio: false,
@@ -59,11 +36,18 @@ const Meeting = () => {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const domain = 'server-production-2381.up.railway.app';
       localStream.current = stream;
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
-        console.log("ok local stream");
       }
+
+      serverConnection.current = new WebSocket(
+        `wss://${domain}`
+      );
+      serverConnection.current.onmessage = gotMessageFromServer;
+
+      start(true);
     } catch (error) {
       errorHandler(error);
     }
@@ -75,21 +59,17 @@ const Meeting = () => {
       !serverConnection.current ||
       serverConnection.current.readyState !== WebSocket.OPEN
     ) {
-      console.error("Server connection not open");
       return;
     }
 
-    // Create peer connection
     peerConnection.current = new RTCPeerConnection(peerConnectionConfig);
     peerConnection.current.onicecandidate = gotIceCandidate;
     peerConnection.current.ontrack = gotRemoteStream;
 
-    // Local stream to peer connection
     for (const track of localStream.current.getTracks()) {
       peerConnection.current.addTrack(track, localStream.current);
     }
 
-    // Create offer if caller
     if (isCaller) {
       peerConnection.current
         .createOffer()
@@ -171,11 +151,9 @@ const Meeting = () => {
     return `${s4() + s4()}-${s4()}-${s4()}-${s4()}-${s4() + s4() + s4()}`;
   }
 
-  const uuid = createUUID();
-
   function muteMic() {
-    localStream.current.getAudioTracks()[0].enabled =
-      !localStream.current.getAudioTracks()[0].enabled;
+    localStream.getAudioTracks()[0].enabled =
+      !localStream.getAudioTracks()[0].enabled;
   }
 
   function muteCam() {
