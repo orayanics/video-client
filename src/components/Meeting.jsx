@@ -70,7 +70,7 @@ const Meeting = () => {
         console.log("Connection open");
 
         start(true);
-        console.log('Start WebRTC signaling')
+        console.log("Start WebRTC signaling");
       };
 
       serverConnection.current.onmessage = gotMessageFromServer;
@@ -109,6 +109,7 @@ const Meeting = () => {
     if (!peerConnection.current) start(false);
 
     const signal = JSON.parse(message.data);
+    console.log("Received message from server:", message.data);
 
     // Ignore messages from ourself
     if (signal.uuid === uuid) return;
@@ -130,6 +131,7 @@ const Meeting = () => {
       peerConnection.current
         .addIceCandidate(new RTCIceCandidate(signal.ice))
         .catch(errorHandler);
+      console.log("Received ICE candidate:", signal.ice);
     }
   }
 
