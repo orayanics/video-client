@@ -90,9 +90,13 @@ const Meeting = () => {
     peerConnection.current.onicecandidate = gotIceCandidate;
     peerConnection.current.ontrack = gotRemoteStream;
 
-    for (const track of localStream.current.getTracks()) {
+    // for (const track of localStream.current.getTracks()) {
+    //   peerConnection.current.addTrack(track, localStream.current);
+    // }
+
+    localStream.current.getTracks().forEach(track => {
       peerConnection.current.addTrack(track, localStream.current);
-    }
+    });
 
     if (isCaller) {
       peerConnection.current
@@ -115,12 +119,11 @@ const Meeting = () => {
         .setRemoteDescription(new RTCSessionDescription(signal.sdp))
         .then(() => {
           // Only create answers in response to offers
-          if (signal.sdp.type !== "offer") return;
-
-          peerConnection.current
-            .createAnswer()
-            .then(createdDescription)
-            .catch(errorHandler);
+          if (signal.sdp.type === "offer") {
+            peerConnection.current.createAnswer()
+              .then(createdDescription)
+              .catch(errorHandler);
+          }
         })
         .catch(errorHandler);
     } else if (signal.ice) {
@@ -160,6 +163,7 @@ const Meeting = () => {
     if (remoteVideoRef.current) {
       remoteVideoRef.current.srcObject = event.streams[0];
     }
+    console.log("Peer Connection State:", peerConnection.current.connectionState);
   }
 
   function errorHandler(error) {
