@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 const Meeting = () => {
+  const navigate = useNavigate();
+  
   // Get Room ID
   const { roomid } = useParams();
 
@@ -132,6 +134,11 @@ const Meeting = () => {
         .addIceCandidate(new RTCIceCandidate(signal.ice))
         .catch(errorHandler);
       console.log("Received ICE candidate:", signal.ice);
+    }
+
+        // Handle Room Maximum Capacity
+    if (signal.type === "room-full") {
+      navigate("/");
     }
   }
 
